@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_DB: kpi-management-system
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: always
+    # networks:
+    #   - prisma-network
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U prisma -d postgres"]
+    #   interval: 5s
+    #   timeout: 2s
+    #   retries: 20
+    # command: postgres -c listen_addresses='*'
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmintest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: myemail@email.com
+      PGADMIN_DEFAULT_PASSWORD: mypassword
+    ports:
+      - "8888:80"
+    depends_on:
+      - postgres
+
+# networks:
+#   prima-network:
+
+volumes:
+  data:

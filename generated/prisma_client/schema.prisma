@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma_client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(50)
+  email        String   @unique @db.VarChar(100)
+  passwordHash String   @db.Text
+  roleId       Int?     @map("role_id")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  role    Role?       @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  kpis    Kpi[]       @relation("AssignedKpis")
+  updates KpiUpdate[] @relation("UpdatedBy")
+}
+
+model Role {
+  id    Int      @id @default(autoincrement())
+  name  RoleName @unique
+  users User[]
+}
+
+enum RoleName {
+  admin
+  user
+}
+
+enum KpiStatus {
+  ON_TRACK  @map("On track")
+  AT_RISK   @map("At Risk")
+  OFF_TRACK @map("Off Track")
+}
+
+model Kpi {
+  id           Int       @id @default(autoincrement())
+  title        String    @db.VarChar(255)
+  description  String?   @db.Text
+  targetValue  Decimal   @map("target_value") @db.Decimal(10, 2)
+  actualValue  Decimal   @default(0.00) @map("actual_value") @db.Decimal(10, 2)
+  status       KpiStatus
+  assignedUser Int       @map("assigned_user")
+  startDate    DateTime  @map("start_date") @db.Date
+  endDate      DateTime  @map("end_date") @db.Date
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @map("updated_at")
+
+  user    User        @relation("AssignedKpis", fields: [assignedUser], references: [id], onDelete: Cascade)
+  updates KpiUpdate[]
+
+  // @@check(status IN ('On Track', 'At Risk', 'Off Track'))
+}
+
+model KpiUpdate {
+  id           Int      @id @default(autoincrement())
+  kpiId        Int      @map("kpi_id")
+  updatedValue Decimal  @map("updated_value") @db.Decimal(10, 2)
+  comment      String?  @db.Text
+  updatedBy    Int?     @map("update_by")
+  updatedAt    DateTime @default(now()) @map("updated_at")
+
+  kpi  Kpi   @relation(fields: [kpiId], references: [id], onDelete: Cascade)
+  user User? @relation("UpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+}
