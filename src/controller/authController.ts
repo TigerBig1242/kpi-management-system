@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { RequestHandler } from "express";
-import registerUser from '../service/authService';
-import { loginUser } from '../service/authService';
+// import { getUsers } from '../service/authService';
+import { loginUser, RegisterUser, getUsers } from '../service/authService';
 import jwt from 'jsonwebtoken';
 import { isTokenValid, removeToken, saveToken } from '../../token.store';
 import { generateAccessToken } from '../utils/token-utils';
@@ -9,7 +9,7 @@ import { generateAccessToken } from '../utils/token-utils';
 // Register user function
 export const register: RequestHandler = async(req: Request, res: Response) => {
     try {
-        const user = await registerUser(req.body);
+        const user = await RegisterUser(req.body);
         res.status(201).json({
             "message": "Created successfully",
             "data": user
@@ -149,4 +149,20 @@ export const refreshToken = (req: Request, res: Response) => {
 
         res.status(200).json({ accessToken: newAccessToken });
     });
+}
+
+export const users: RequestHandler = async(_req: Request, res: Response) => {
+    try {
+        const user = await getUsers();
+
+        if(!user) {
+            res.status(401).json({ message: "Error user not found" });
+            return;
+        }
+        res.status(200).json({ user: user });
+        return;
+    } catch (error) {
+        res.status(500).json({ message: error });
+        return;
+    }
 }

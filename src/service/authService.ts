@@ -12,7 +12,7 @@ export interface Register {
 }
 
 // Register user function
-export default async function registerUser(data: Register) {
+export const RegisterUser = async(data: Register) => {
         const { username, email, password, roleId } = data;
         const salt = await bcrypt.genSalt(10);
         const passwordHashed = await bcrypt.hash(password, salt);
@@ -68,17 +68,6 @@ export const loginUser = async(email: string, password: string) => {
     if(!process.env.ACCESS_TOKEN_SECRET) {
         throw new Error("ACCESS_TOKEN_SECRET is not defined in the environment variables");
     }
-    
-    // const token = jwt.sign(
-    //     { 
-    //         id: user.id, 
-    //         role: user.roleId,
-    //         user: user.username,
-    //         role_name: user.role?.name,
-    //     },
-    //     process.env.JWT_SECRET!,
-    //     { expiresIn: '1m', }
-    // );
 
     const payload = {
         id: user.id, 
@@ -94,4 +83,23 @@ export const loginUser = async(email: string, password: string) => {
     saveToken(refreshToken);
     return { user, accessToken, refreshToken, }
     // return { user, token };
+}
+
+export const getUsers = async() => {
+    try {
+        const user = await prisma.user.findMany({
+            select: {
+                email: true,
+                username: true,
+            }
+        });
+
+        if(!user) {
+            throw new Error("user not found");
+        }
+        return user;
+    } catch (error) {
+        console.error("Error fetch user :", error);
+        throw new Error("Error fetch user");
+    }
 }
